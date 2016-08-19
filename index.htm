@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      html {
+        font-family: sans-serif;
+      }
+      #messages div.message {
+        padding: 4px 8px;
+      }
+      #messages div.message div.blob {
+        display: inline-block;
+        padding: 4px 8px;
+        background-color: hsla(212, 50%, 80%, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="messages">
+      <div class="message">
+        <div class="blob">This is the first message in the history.</div>
+      </div>
+    </div>
+    <form id="buffer">
+      <input id="message" type="text" placeholder="type message here"/>
+    </form>
+    <script src="https://js.pusher.com/3.2/pusher.min.js"></script>
+    <script>
+      var pusher = new Pusher("2a16e610c21e5ebeaa54", {
+        authEndpoint: "http://chat-bot-example.herokuapp.com/pusher/auth",
+        encrypted: true
+      });
+
+      var chatChannel = pusher.subscribe("private-chat");
+
+      chatChannel.bind('pusher:subscription_succeeded', function() {
+        console.log("Subscribed");
+
+        chatChannel.bind("client-message", function(data) {
+          console.log("Received client message");
+
+          var msgEl = document.createElement("div"); msgEl.setAttribute("class", "message");
+          var blobEl = document.createElement("div"); blobEl.setAttribute("class", "blob");
+          blobEl.innerText = data.text;
+          msgEl.appendChild(blobEl);
+          document.getElementById("messages").appendChild(msgEl);
+        });
+      });
+
+      function msg(text) {
+        chatChannel.trigger("client-message", { text: text });
+      }
+
+      document.getElementById("buffer").addEventListener("submit", function (e) {
+        msg(document.getElementById("message").value);
+        document.getElementById("message").value = "";
+        e.preventDefault();
+        return false;
+      });
+    </script>
+  </body>
+</html>
